@@ -5,11 +5,11 @@ Example of extending CloudFormation with lambda custom resource.
 Before for creating a custom resource in CloudFormation, you need to prepare a CloudFormation template that creates a lambda function. We will demonstrate a nested template, a child template will create our lambda function, another child template will create the VPC, after both are complete the parent template will call the custom resource to attach the VPC to a Route 53 internal hosted zone. The internal hosted zone ID will be passed to the parent template by use of a parameter. From here this blog turns into a tutorial.
 
 ### Assumptions:
-You have an AWS Account.
-You’re using Bash.
-You have pip installed
-You're the AWS CLI installed, preferred version 1.10.x or greater. Help
-You have configured the CLI, set up AWS IAM access credentials. Help
+* You have an AWS Account.
+* You’re using Bash.
+* You have pip installed
+* You're the AWS CLI installed, preferred version 1.10.x or greater. Help
+* You have configured the CLI, set up AWS IAM access credentials. Help
 
 ### Step 1: Create a internal hosted zone. 
 When creating a internal hosted zone you must specify a VPC, for this we will use one of the default VPC’s created with your AWS account. If you do not have a default VPC, create a dummy VPC and use that. If you feel more comfortable using the console feel free. If you already have a internal hosted zone you can skip this portion. 
