@@ -34,12 +34,11 @@
          "PolicyDocument" : {
            "Statement": [
             {
-              "Sid": "AllowLogsS3AndEc2",
+              "Sid": "AssociateDisassociateVPCFromHostedZone",
               "Action": [
                 "lambda:*",
                 "logs:*","s3:*",
                 "iam:PassRole",
-                "ec2:DescribeVpcs",
                 "route53:AssociateVPCWithHostedZone",
                 "route53:DisassociateVPCFromHostedZone"
               ],
