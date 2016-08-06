@@ -1,0 +1,35 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Lambda function",
+  "Parameters": {
+    "S3Bucket": {
+      "Type": "String",
+      "Description": "S3 bucket where lambda function resides"
+    },
+    "LambdaRoleArn": {
+      "Type": "String",
+      "Description": "Lambda Role created in IAM stack"
+    }
+  },
+  "Resources": {
+    "LambdaAttachHostedZoneFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "lambda_handler.lambda_handler",
+        "Role": { "Ref" : "LambdaRoleArn" },
+        "Code": {
+          "S3Bucket" : { "Ref": "S3Bucket" },
+          "S3Key" : "builds/attach_hosted_zone.zip"
+        },
+        "Timeout" : "60",
+        "Runtime": "python2.7"
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaAttachHostedZoneArn": {
+      "Description": "Lambda attach hosted zone function arn",
+      "Value": { "Fn::GetAtt": [ "LambdaAttachHostedZoneFunction", "Arn"] }
+    }
+  }
+}

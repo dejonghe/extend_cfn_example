@@ -1,0 +1,50 @@
+{
+  "AWSTemplateFormatVersion":"2010-09-09",
+  "Description":"Network VPC Stack.",
+  "Parameters":{
+    "InternalDomain": {
+      "Description": "The internal zone for DHCP.",
+      "Type": "String"
+    }
+  },
+  "Conditions": {
+  },
+  "Mappings":{
+  },
+  "Resources":{
+    "VPC":{
+      "Type":"AWS::EC2::VPC",
+      "Properties":{
+        "CidrBlock": "10.0.0.0/20",
+    	"EnableDnsSupport" : "true",
+    	"EnableDnsHostnames" : "true",
+        "Tags" : [
+          { "Key" : "Name", "Value": "Extend-CFN-Example" }
+        ]
+      }
+    },
+    "DhcpOptions":{
+      "Type":"AWS::EC2::DHCPOptions",
+      "Properties":{
+        "DomainName": { "Ref": "InternalDomain" },
+        "DomainNameServers":[ "AmazonProvidedDNS" ],
+        "Tags" : [
+          { "Key" : "Name", "Value": "Extend-CFN-Example" }
+        ]
+      }
+    },
+    "DHCPOptionsAssociation":{
+      "Type":"AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties":{
+        "VpcId":{ "Ref":"VPC" },
+        "DhcpOptionsId":{ "Ref":"DhcpOptions" }
+      }
+    }
+  },
+  "Outputs":{
+    "VPC":{
+      "Description": "Pysical ID of VPC",
+      "Value": { "Ref": "VPC" }
+    }
+  }
+}

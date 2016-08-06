@@ -1,0 +1,80 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Nested CloudFormation Stack to demonstrate extending CloudFormation with custom resource and lambda.",
+  "Parameters": {
+    "CloudToolsBucket": {
+      "Description":"Name of S3 bucket containing CloudTools scripts.",
+      "Type": "String",
+      "Default": ""
+    },
+    "PrivateDomain": {
+      "Description": "Private domain name.",
+      "Type": "String",
+      "Default": ""
+    },
+    "InternalHostedZone" : {
+      "Description" : "Route53 private hosted zone",
+      "Type" : "String"
+    }
+  },
+  "Mappings": {
+  }, 
+  "Conditions": {
+    "LambdaAvailable": { "Fn::Not": [
+      { "Fn::Or": [
+        { "Fn::Equals": [ { "Ref": "AWS::Region" }, "us-west-1" ] },
+        { "Fn::Equals": [ { "Ref": "AWS::Region" }, "ap-southeast-1" ] },
+        { "Fn::Equals": [ { "Ref": "AWS::Region" }, "ap-northeast-2" ] },
+        { "Fn::Equals": [ { "Ref": "AWS::Region" }, "sa-east-1" ] }
+      ]}
+    ]},
+    "IsRegionUSStandard": { "Fn::Equals": [ { "Ref": "AWS::Region" }, "us-east-1" ] }
+  },
+  "Resources": {
+    "CustomLogic": {
+      "Condition": "LambdaAvailable",
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://s3", { "Fn::If": [ "IsRegionUSStandard", "", { "Fn::Join": [ "", [ "-", { "Ref": "AWS::Region" } ] ] } ] }, ".amazonaws.com/", { "Ref": "CloudToolsBucket" }, "/cloudformation/network/custom_logic.json" ]] },
+        "Parameters": {
+          "S3Bucket": { "Ref": "CloudToolsBucket" },
+          "LambdaRoleArn": { "Fn::GetAtt": [ "IAM", "Outputs.LambdaRoleArn" ] }
+        }
+      }
+    },
+    "IAM": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://s3", { "Fn::If": [ "IsRegionUSStandard", "", { "Fn::Join": [ "", [ "-", { "Ref": "AWS::Region" } ] ] } ] }, ".amazonaws.com/", { "Ref": "CloudToolsBucket" }, "/cloudformation/network/iam.json" ]] },
+        "Parameters": {
+          "CloudToolsBucket": { "Ref": "CloudToolsBucket" }
+        }
+      }
+    },
+    "VPC": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://s3", { "Fn::If": [ "IsRegionUSStandard", "", { "Fn::Join": [ "", [ "-", { "Ref": "AWS::Region" } ] ] } ] }, ".amazonaws.com/", { "Ref": "CloudToolsBucket" }, "/cloudformation/network/vpc.json" ]] },
+        "Parameters": {
+          "InternalDomain": { "Ref": "PrivateDomain" }
+        }
+      }
+    },
+    "AttachVpcToHostedZone": {
+      "Type": "Custom::AttachVpcToHostedZone",
+      "Properties": {
+        "ServiceToken": { "Fn::If": ["LambdaAvailable",{ "Fn::GetAtt": [ "CustomLogic", "Outputs.LambdaAttachHostedZoneArn" ] }, { "Ref": "AWS::NoValue" } ] },
+        "Region": { "Ref": "AWS::Region" },
+        "HostedZoneId": { "Ref": "InternalHostedZone" },
+        "VpcId": { "Fn::GetAtt": [ "VPC", "Outputs.VPC" ] }
+      }
+    }
+  },
+  "Outputs": {
+    "VPC": {
+      "Description": "ID for Virtual Pricate Cloud",
+      "Value": { "Fn::GetAtt": [ "VPC", "Outputs.VPC" ] }
+    }
+  }
+}
+
