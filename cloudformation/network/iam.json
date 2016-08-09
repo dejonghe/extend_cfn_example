@@ -39,6 +39,7 @@
                 "lambda:*",
                 "logs:*","s3:*",
                 "iam:PassRole",
+                "ec2:DescribeVpcs",
                 "route53:AssociateVPCWithHostedZone",
                 "route53:DisassociateVPCFromHostedZone"
               ],
