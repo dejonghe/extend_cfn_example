@@ -15,7 +15,7 @@
     "LambdaAttachHostedZoneFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
-        "Handler": "lambda_handler.lambda_handler",
+        "Handler": "lambda_function.lambda_handler",
         "Role": { "Ref" : "LambdaRoleArn" },
         "Code": {
           "S3Bucket" : { "Ref": "S3Bucket" },
