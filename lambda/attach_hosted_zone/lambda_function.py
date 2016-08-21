@@ -8,9 +8,9 @@ from optparse import OptionParser
 
 
 logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
+ch.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
@@ -22,6 +22,8 @@ class zone_attach(object):
     def __init__(self, event, context):
         self.event = event
         self.context = context
+        logger.info("Event: %s" % self.event)
+        logger.info("Context: %s" % self.context)
         if self.context != None:
            self.route53 = boto3.session.Session().client('route53')
         else:
@@ -32,39 +34,41 @@ class zone_attach(object):
             self.region = event['ResourceProperties']['Region']
         except KeyError as e:
             self.reason = "Missing required property %s" % e
+            logger.error(self.reason)
             if self.context:
                 self.send_status(FAILED)
-            else:
-                logger.info(self.reason)
             return
 
     def create(self, updating=False):
         try:
-            self.route53.associate_vpc_with_hosted_zone(
+            response = self.route53.associate_vpc_with_hosted_zone(
                 HostedZoneId=self.hosted_zone_id,
                 VPC={
                     'VPCRegion': self.region,
                     'VPCId': self.vpc_id
                 }
             )
+            logger.info("Response: %s" % response)
             if not updating:
                 self.send_status(SUCCESS)
         except Exception as e:
             self.reason = "Create Vpc Hosted Zone association call Failed %s" % e
+            logger.error(self.reason)
             if self.context:
                 self.send_status(FAILED)
-            else: 
-                logger.info(self.reason)
             return
+
     def delete(self, updating=False):
         if updating:
             hosted_zone = self.event['OldResourceProperties']['HostedZoneId']
             vpc_id = self.event['OldResourceProperties']['VpcId']
             region = self.event['OldResourceProperties']['Region']
+            logger.info("Update dissociate: %s from %s" % (vpc_id,hosted_zone))
         else:
             hosted_zone = self.hosted_zone_id
             vpc_id = self.vpc_id
             region = self.region
+            logger.info("Dissociate: %s from %s" % (vpc_id,hosted_zone))
         try: 
             self.route53.disassociate_vpc_from_hosted_zone(
                 HostedZoneId=hosted_zone,
@@ -77,10 +81,9 @@ class zone_attach(object):
                 self.send_status(SUCCESS)
         except Exception as e:
             self.reason = "Delete Vpc Hosted Zone association call Failed %s" % e
+            logger.error(self.reason)
             if self.context:
                 self.send_status(FAILED)
-            else:
-                logger.info(self.reason)
             return
 
     def update(self):
